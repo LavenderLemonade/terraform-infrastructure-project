@@ -39,5 +39,13 @@ resource "aws_subnet" "private" {
   }
 }
 
+resource "aws_instance" "web_server" {
+  ami           = "ami-08982f1c5bf93d976" # Replace with a valid AMI ID for your region
+  instance_type = "t2.micro"
+  subnet_id     = aws_subnet.public.id # Associates the instance with the subnet
+  tags = {
+    Name = "web-server"
+  }
+}
 
 
