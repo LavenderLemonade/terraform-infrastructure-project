@@ -122,3 +122,18 @@ resource "aws_db_instance" "test_db" {
   skip_final_snapshot    = true
 }
 
+resource "aws_s3_bucket" "sammy-bucket-example" {
+  bucket = "my-tf-test-bucket"
+  tags = {
+    Name        = "My bucket"
+    Environment = "Dev"
+  }
+
+}
+
+resource "aws_s3_bucket_versioning" "versioning_example" {
+  bucket = aws_s3_bucket.sammy-bucket-example.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
