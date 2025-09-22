@@ -16,6 +16,7 @@ module "vpc"{
     source = "./modules"
 }
 
+
 resource "aws_instance" "web_server" {
   ami           = "ami-08982f1c5bf93d976" # Replace with a valid AMI ID for your region
   instance_type = "t2.micro"
@@ -35,42 +36,7 @@ resource "aws_db_subnet_group" "db_group" {
   }
 }
 
-# Create a private security group within the VPC
-resource "aws_security_group" "private_sg" {
-  name        = "private-security-group"
-  description = "Security group for private resources"
-  vpc_id      = module.vpc.main_vpc # Associate with the created VPC
 
-  # Ingress rules (inbound traffic)
-  ingress {
-    description = "Allow SSH from within the VPC"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [module.vpc.public_cidr] # Allow SSH from any IP within the VPC
-  }
-
-  ingress {
-    description = "Allow HTTP from within the VPC"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = [module.vpc.public_cidr] # Allow HTTP from any IP within the VPC
-  }
-
-  # Egress rules (outbound traffic)
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1" # -1 signifies all protocols
-    cidr_blocks = ["0.0.0.0/0"] # Allow outbound to all IP addresses
-  }
-
-  tags = {
-    Name = "private-sg"
-  }
-}
 
 
 resource "aws_db_instance" "test_db" {
@@ -82,7 +48,7 @@ resource "aws_db_instance" "test_db" {
   engine                 = "postgres"
   engine_version         = "16.6"
   db_subnet_group_name   = aws_db_subnet_group.db_group.name
-  vpc_security_group_ids = [aws_security_group.private_sg.id]
+  vpc_security_group_ids = [module.vpc.private_sg.id]
   publicly_accessible    = false
   skip_final_snapshot    = true
 }
