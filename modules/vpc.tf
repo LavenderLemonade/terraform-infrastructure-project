@@ -74,3 +74,12 @@ resource "aws_security_group" "private_sg" {
     Name = "private-sg"
   }
 }
+
+resource "aws_db_subnet_group" "db_group" {
+  name       = "db_group"
+  subnet_ids = [aws_subnet.private.id, aws_subnet.private2.id]
+
+  tags = {
+    Name = "database"
+  }
+}

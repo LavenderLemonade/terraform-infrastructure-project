@@ -27,18 +27,6 @@ resource "aws_instance" "web_server" {
   }
 }
 
-resource "aws_db_subnet_group" "db_group" {
-  name       = "db_group"
-  subnet_ids = [module.vpc.private_subnet_id, module.vpc.private2_subnet_id]
-
-  tags = {
-    Name = "database"
-  }
-}
-
-
-
-
 resource "aws_db_instance" "test_db" {
   identifier             = "test"
   instance_class         = "db.t3.micro"
@@ -47,7 +35,7 @@ resource "aws_db_instance" "test_db" {
   allocated_storage      = 5
   engine                 = "postgres"
   engine_version         = "16.6"
-  db_subnet_group_name   = aws_db_subnet_group.db_group.name
+  db_subnet_group_name   = module.vpc.subnet_group_db.name
   vpc_security_group_ids = [module.vpc.private_sg.id]
   publicly_accessible    = false
   skip_final_snapshot    = true
