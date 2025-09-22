@@ -12,50 +12,14 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_vpc" "main-vpc" {
-    cidr_block = "10.0.0.0/16"
-    instance_tenancy = "default"
-
-    tags = {
-        Name = "main-vpc"
-    }
-}
-
-resource "aws_subnet" "public" {
-    vpc_id     = aws_vpc.main-vpc.id
-    cidr_block = "10.0.1.0/24"
-    availability_zone = "us-east-1b"
-
-
-  tags = {
-    Name = "public-subnet"
-  }
-}
-
-resource "aws_subnet" "private" {
-    vpc_id     = aws_vpc.main-vpc.id
-    cidr_block = "10.0.2.0/24"
-    availability_zone = "us-east-1a"
-
-  tags = {
-    Name = "private-subnet"
-  }
-}
-
-resource "aws_subnet" "private2" {
-    vpc_id     = aws_vpc.main-vpc.id
-    cidr_block = "10.0.3.0/24"
-    availability_zone = "us-east-1c"
-
-  tags = {
-    Name = "private-subnet-2"
-  }
+module "vpc"{
+    source = "./modules"
 }
 
 resource "aws_instance" "web_server" {
   ami           = "ami-08982f1c5bf93d976" # Replace with a valid AMI ID for your region
   instance_type = "t2.micro"
-  subnet_id     = aws_subnet.public.id # Associates the instance with the subnet
+  subnet_id     = module.vpc.public_subnet_id # Associates the instance with the subnet
   iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
   tags = {
     Name = "web-server"
@@ -64,7 +28,7 @@ resource "aws_instance" "web_server" {
 
 resource "aws_db_subnet_group" "db_group" {
   name       = "db_group"
-  subnet_ids = [aws_subnet.private.id, aws_subnet.private2.id]
+  subnet_ids = [module.vpc.private_subnet_id, module.vpc.private2_subnet_id]
 
   tags = {
     Name = "database"
@@ -75,7 +39,7 @@ resource "aws_db_subnet_group" "db_group" {
 resource "aws_security_group" "private_sg" {
   name        = "private-security-group"
   description = "Security group for private resources"
-  vpc_id      = aws_vpc.main-vpc.id # Associate with the created VPC
+  vpc_id      = module.vpc.main_vpc # Associate with the created VPC
 
   # Ingress rules (inbound traffic)
   ingress {
@@ -83,7 +47,7 @@ resource "aws_security_group" "private_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main-vpc.cidr_block] # Allow SSH from any IP within the VPC
+    cidr_blocks = [module.vpc.public_cidr] # Allow SSH from any IP within the VPC
   }
 
   ingress {
@@ -91,7 +55,7 @@ resource "aws_security_group" "private_sg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main-vpc.cidr_block] # Allow HTTP from any IP within the VPC
+    cidr_blocks = [module.vpc.public_cidr] # Allow HTTP from any IP within the VPC
   }
 
   # Egress rules (outbound traffic)
